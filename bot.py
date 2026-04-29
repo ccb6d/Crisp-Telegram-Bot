@@ -1,4 +1,3 @@
-
 import os
 import yaml
 import logging
@@ -38,13 +37,21 @@ except Exception as error:
     logging.warning('无法连接 Crisp 服务，请确认 Crisp 配置项是否正确')
     exit(1)
 
-# Connect OpenAI
+# Connect LLM (OpenAI-compatible API)
+llm = None
+llm_enabled = False
+llm_cfg = config.get('llm', {})
 try:
-    openai = OpenAI(api_key=config['openai']['apiKey'],base_url='https://api.openai.com/v1')
-    openai.models.list()
+    if llm_cfg.get('enabled', True):
+        api_key = llm_cfg.get('apiKey', '') or 'dummy'
+        base_url = llm_cfg.get('baseUrl', 'https://api.openai.com/v1')
+        llm = OpenAI(api_key=api_key, base_url=base_url)
+        llm.models.list()
+        llm_enabled = True
 except Exception as error:
-    logging.warning('无法连接 OpenAI 服务，智能化回复将不会使用')
-    openai = None
+    logging.warning('无法连接 LLM/OpenClaw 兼容接口，智能化回复将不会使用')
+    llm = None
+    llm_enabled = False
 
 def changeButton(sessionId,boolean):
     return InlineKeyboardMarkup(
@@ -97,20 +104,12 @@ async def handleImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        # 获取文件下载 URL
         file = await context.bot.get_file(file_id)
         file_url = file.file_path
-
-        # 上传图片到 EasyImages
         uploaded_url = upload_image_to_easyimages(file_url)
-
-        # 生成 Markdown 格式的链接
         markdown_link = f"![Image]({uploaded_url})"
-
-        # 查找对应的 Crisp 会话 ID
         session_id = get_target_session_id(context, msg.message_thread_id)
         if session_id:
-            # 将 Markdown 链接推送给客户
             send_markdown_to_client(session_id, markdown_link)
             await msg.reply_text("图片已成功发送给客户！")
         else:
@@ -148,10 +147,9 @@ def get_target_session_id(context, thread_id):
 
 def send_markdown_to_client(session_id, markdown_link):
     try:
-        # 将 Markdown 图片链接作为纯文本发送
         query = {
             "type": "text",
-            "content": markdown_link,  # 将图片链接当做普通文本
+            "content": markdown_link,
             "from": "operator",
             "origin": "chat",
             "user": {
@@ -170,15 +168,15 @@ def send_markdown_to_client(session_id, markdown_link):
         raise
 
 async def onChange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Parses the CallbackQuery and updates the message text."""
     query = update.callback_query
 
-    if openai is None:
+    if not llm_enabled:
         await query.answer('无法设置此功能')
     else:
         data = query.data.split(',')
         session = context.bot_data.get(data[0])
-        session["enableAI"] = not eval(data[1])
+        current = data[1] == 'True'
+        session["enableAI"] = not current
         await query.answer()
         try:
              await query.edit_message_reply_markup(changeButton(data[0],session["enableAI"]))
@@ -188,7 +186,6 @@ async def onChange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 def main():
     try:
         app = Application.builder().token(config['bot']['token']).defaults(Defaults(parse_mode='HTML')).build()
-        # 启动 Bot
         if os.getenv('RUNNER_NAME') is not None:
             return
         app.add_handler(MessageHandler(filters.TEXT, onReply))

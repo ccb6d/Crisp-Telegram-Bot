@@ -10,10 +10,8 @@
 #     result=`echo -e "${str}"`
 # }
 AUTOREPLY=`echo -e "${AUTOREPLY}"`
-OPENAI_PAYLOAD=`echo -e "${OPENAI_PAYLOAD}"`
+LLM_PAYLOAD=`echo -e "${LLM_PAYLOAD}"`
 
-# if [ ! -e "/Crisp-Telegram-Bot/config.yml" ]; then
-# conver_to_array ${BOT_SEND_ID}
 cat > /Crisp-Telegram-Bot/config.yml << EOF
 bot:
   token: ${BOT_TOKEN}
@@ -27,10 +25,14 @@ easyimages:
   apiToken: ${EasyImages_apiToken}
 autoreply:
 ${AUTOREPLY}
-openai:
-  apiKey: ${OPENAI_APIKEY}
+llm:
+  enabled: ${LLM_ENABLED:-true}
+  apiKey: ${LLM_APIKEY:-dummy}
+  baseUrl: ${LLM_BASEURL:-https://api.openai.com/v1}
+  model: ${LLM_MODEL:-gpt-4o-mini}
+  temperature: ${LLM_TEMPERATURE:-0.4}
+  maxTokens: ${LLM_MAXTOKENS:-600}
   payload: |
-${OPENAI_PAYLOAD}
+${LLM_PAYLOAD}
 EOF
-# fi
 exec "$@"
