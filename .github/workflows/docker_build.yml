@@ -1,17 +1,19 @@
-name: Docker Image Build
+name: Build Docker image
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - "master"
-    paths-ignore:
-      - "**/README.md"
-      - "**/LICENSE"
-      - "**/docker-compose.yml.example"
-      - "**/config.yml.example"
-      - "**/.dockerignore"
-      - "**/.gitignore"
+      - master
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/crisp-telegram-bot
 
 jobs:
   docker:
@@ -21,25 +23,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.FAQ_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.FAQ_DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup builder
-        run: docker run --privileged --rm tonistiigi/binfmt --install all
-      - run: docker buildx create --name builder --driver docker-container --platform linux/amd64,linux/arm64 --use
-      - run: docker buildx inspect --bootstrap
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
 
-      - name: Build image and push(py3.9)
-        run: docker buildx build -t ${{ secrets.FAQ_DOCKERHUB_USERNAME }}/crisp-telegram-bot:latest -t ${{ secrets.FAQ_DOCKERHUB_USERNAME }}/crisp-telegram-bot:py3.9 --platform linux/amd64,linux/arm64 --progress plain --push -f dockerfiles/py3.9/Dockerfile .
-
-      - name: Build image and push(py3.10)
-        run: docker buildx build -t ${{ secrets.FAQ_DOCKERHUB_USERNAME }}/crisp-telegram-bot:py3.10 --platform linux/amd64,linux/arm64 --progress plain --push -f dockerfiles/py3.10/Dockerfile .
-
-      - name: Build image and push(py3.11)
-        run: docker buildx build -t ${{ secrets.FAQ_DOCKERHUB_USERNAME }}/crisp-telegram-bot:py3.11 --platform linux/amd64,linux/arm64 --progress plain --push -f dockerfiles/py3.11/Dockerfile .
-
-      - name: Build image and push(py3.12)
-        run: docker buildx build -t ${{ secrets.FAQ_DOCKERHUB_USERNAME }}/crisp-telegram-bot:py3.12 --platform linux/amd64,linux/arm64 --progress plain --push -f dockerfiles/py3.12/Dockerfile .
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -32,6 +32,29 @@ nano config.yml
 python3 bot.py
 ```
 
+## Docker / GitHub Actions（第一版最小设计）
+
+仓库已内置：
+- 根目录 `Dockerfile`
+- `.github/workflows/docker_build.yml`
+
+行为：
+- 每次 push 到 `main` / `master` 自动构建 Docker 镜像
+- 默认推送到 `ghcr.io/<你的 GitHub 用户名>/crisp-telegram-bot:latest`
+- 同时附带一个 `sha-xxxxxxx` 标签
+
+使用方式：
+1. 在 GitHub 仓库的 **Packages** 中查看镜像是否已生成
+2. 参考 `docker-compose.yml.example`，将镜像地址改为你的实际仓库地址（如未自动匹配）
+3. 本地拉取并测试：
+   - `docker pull ghcr.io/<你的 GitHub 用户名>/crisp-telegram-bot:latest`
+   - `docker compose up -d`
+
+说明：
+- 当前第一版只做单镜像、单平台 `linux/amd64` 构建，优先保证简单稳定
+- 后续如果你测试通过，再扩成多架构（如 `arm64`）和多 tag 策略
+
+
 ## 申请 Telegram Bot Token
 
 1. 私聊 [https://t.me/BotFather](https://https://t.me/BotFather)

@@ -2,7 +2,7 @@ name: crisp-telegram-bot
 
 services:
   bot:
-    image: moefaq/crisp-telegram-bot
+    image: ghcr.io/ccb6d/crisp-telegram-bot:latest
     restart: always
     environment:
       TZ: Asia/Shanghai
@@ -23,8 +23,3 @@ services:
         \0    积极倾听用户的问题，耐心询问细节，并提供清晰、详细的回答或指导。
         \0    优先参考提供的内容，以提供准确解答；若知识库无相关信息，再深入思考找到适合的回答。
         \0    在每次互动中，确保为用户提供友好、积极的支持体验。
-    networks:
-      - network
-
-networks:
-  network:
