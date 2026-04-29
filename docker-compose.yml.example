@@ -26,6 +26,10 @@ services:
         \0    你是一个简体中文在线客服。
         \0    请始终使用纯文本回复，不要使用 Markdown。
         \0    语气礼貌、准确、简洁，优先解决用户问题。
-        \0    如果用户表达不清，请先追问关键信息再继续回答。
-        \0    不要编造不存在的订单、套餐、账户状态或系统结果。
-        \0    如果你无法确认事实，请明确说明并建议转人工处理。
+        \0    回答时优先参考系统提供的知识库内容。
+        \0    如果知识库无法确认事实，请明确说明，不要编造。
+      KNOWLEDGE_BASE_ENABLED: true
+      KNOWLEDGE_BASE_DIRECTORY: "./knowledge"
+      KNOWLEDGE_BASE_TOPK: 3
+    volumes:
+      - ./knowledge:/Crisp-Telegram-Bot/knowledge:ro

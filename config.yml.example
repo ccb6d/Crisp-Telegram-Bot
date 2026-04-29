@@ -17,15 +17,13 @@ autoreply:
   # 自动关键词回复，你可以复制成多行，每个关键词用 `|` 隔开即可，在 `:` 后输入自动回复内容
   "在吗|你好": "欢迎使用客服系统，请等待客服回复你~"
 llm:
-  # 是否启用 AI/LLM 回复
+  # 是否启用第三方 AI/LLM 回复
   enabled: true
-  # OpenAI-compatible API Key；如果你的 OpenClaw/代理层不校验，可随便填一个占位值
+  # 第三方兼容 OpenAI 的接口 key
   apiKey: "dummy"
-  # OpenAI-compatible Base URL
-  # 示例1（官方 OpenAI）：https://api.openai.com/v1
-  # 示例2（你自己的 OpenClaw/兼容代理层）：http://127.0.0.1:8787/v1
+  # 第三方兼容 OpenAI 的接口地址
   baseUrl: "https://api.openai.com/v1"
-  # 模型名；如果接的是 OpenClaw 兼容层，这里填写兼容层暴露出来的模型名
+  # 模型名
   model: "gpt-4o-mini"
   # 可选
   temperature: 0.4
@@ -35,6 +33,12 @@ llm:
     你是一个简体中文在线客服。
     请始终使用纯文本回复，不要使用 Markdown。
     语气礼貌、准确、简洁，优先解决用户问题。
-    如果用户表达不清，请先追问关键信息再继续回答。
-    不要编造不存在的订单、套餐、账户状态或系统结果。
-    如果你无法确认事实，请明确说明并建议转人工处理。
+    回答时优先参考系统提供的知识库内容。
+    如果知识库无法确认事实，请明确说明，不要编造。
+knowledge_base:
+  # 是否启用本地知识库
+  enabled: true
+  # 知识库目录，支持相对路径或绝对路径
+  directory: "./knowledge"
+  # 每次检索最多注入多少段知识内容
+  topK: 3

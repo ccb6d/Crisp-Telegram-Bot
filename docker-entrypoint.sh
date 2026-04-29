@@ -34,5 +34,9 @@ llm:
   maxTokens: ${LLM_MAXTOKENS:-600}
   payload: |
 ${LLM_PAYLOAD}
+knowledge_base:
+  enabled: ${KNOWLEDGE_BASE_ENABLED:-true}
+  directory: ${KNOWLEDGE_BASE_DIRECTORY:-./knowledge}
+  topK: ${KNOWLEDGE_BASE_TOPK:-3}
 EOF
 exec "$@"
